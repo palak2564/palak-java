@@ -1,3 +1,4 @@
+//code to establish a connection with the sql tables using jdbc
 import java.sql.*;
 
 class FirstJDBC {
