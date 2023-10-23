@@ -1,3 +1,4 @@
+//code to insert data into sql tables
 import java.sql.*;
 import java.io.*
 
