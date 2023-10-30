@@ -3,19 +3,24 @@ import java.util.Scanner;
 
 public class PortfolioManagementSystem {
     public static void main(String[] args) {
+        Connection con = null;
         try {
             Class.forName("com.mysql.jdbc.Driver");
             String url = "jdbc:mysql://localhost:3306/portfoliomanagement";
             String username = "root";
             String password = "root";
-            Connection con = DriverManager.getConnection(url, username, password);
-            
+            con = DriverManager.getConnection(url, username, password);
+
             if (con.isClosed()) {
                 System.out.println("Connection is closed");
             } else {
                 System.out.println("Connected!");
             }
-            
+
+            if (!tablesExist(con)) {
+                createTables(con);
+            }
+
             while (true) {
                 System.out.println("Portfolio Management System");
                 System.out.println("1. Login");
@@ -41,10 +46,72 @@ public class PortfolioManagementSystem {
                         System.out.println("Invalid choice. Please try again.");
                 }
             }
-        } catch (Exception e) {
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (con != null && !con.isClosed()) {
+                    con.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static boolean tablesExist(Connection con) {
+        try {
+            DatabaseMetaData metadata = con.getMetaData();
+
+            String[] tableNames = {"users", "user_details", "portfolios", "stocks", "bonds"};
+
+            for (String tableName : tableNames) {
+                ResultSet resultSet = metadata.getTables(null, null, tableName, null);
+                if (!resultSet.next()) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void createTables(Connection con) {
+        try {
+            String createUserTableSQL = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), password VARCHAR(255) DEFAULT 'default_password')";
+            try (PreparedStatement pstmt = con.prepareStatement(createUserTableSQL)) {
+                pstmt.executeUpdate();
+            }
+
+            String createUserDetailsTableSQL = "CREATE TABLE IF NOT EXISTS user_details (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), email VARCHAR(255), first_name VARCHAR(255), last_name VARCHAR(255), date_of_birth DATE, address VARCHAR(255), city VARCHAR(255), state VARCHAR(255), country VARCHAR(255), postal_code VARCHAR(255), phone_number VARCHAR(255))";
+            try (PreparedStatement pstmt = con.prepareStatement(createUserDetailsTableSQL)) {
+                pstmt.executeUpdate();
+            }
+
+            String createPortfoliosTableSQL = "CREATE TABLE IF NOT EXISTS portfolios (id INT AUTO_INCREMENT PRIMARY KEY, portfolio_name VARCHAR(255), username VARCHAR(255))";
+            try (PreparedStatement pstmt = con.prepareStatement(createPortfoliosTableSQL)) {
+                pstmt.executeUpdate();
+            }
+
+            String createStocksTableSQL = "CREATE TABLE IF NOT EXISTS stocks (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), stock_symbol VARCHAR(255), buy_date DATE, quantity INT)";
+            try (PreparedStatement pstmt = con.prepareStatement(createStocksTableSQL)) {
+                pstmt.executeUpdate();
+            }
+
+            String createBondsTableSQL = "CREATE TABLE IF NOT EXISTS bonds (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), bond_name VARCHAR(255), purchase_date DATE, face_value DOUBLE, bond_price DOUBLE, quantity INT)";
+            try (PreparedStatement pstmt = con.prepareStatement(createBondsTableSQL)) {
+                pstmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+}
+
 
     private static void login(Connection con, Scanner scanner) {
         try {
@@ -166,7 +233,7 @@ public class PortfolioManagementSystem {
                 case 3:
                     // SUMIT KA CODE
 
-                    
+
                     break;
                 case 4:
                     System.out.println("Logging out...");
